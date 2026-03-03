@@ -1,2 +1,10 @@
-from datetime import datetime
-print("Scanning started at: ", datetime.now())
+#! /usr/bin/env python3
+
+import socket
+
+target = "scanme.nmap.org"
+
+real_ip = socket.gethostbyname(target)
+
+
+print(real_ip)
