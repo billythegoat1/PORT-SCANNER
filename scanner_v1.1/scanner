@@ -1,0 +1,77 @@
+#! /usr/bin/env python3
+
+import socket
+
+import sys
+
+
+import os
+sys.path.append(os.path.abspath('..'))
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from ports import COMMON_PORTS
+
+from colorama import init, Fore
+
+import pyfiglet
+
+from datetime import datetime
+
+
+
+
+init()
+GREEN = Fore.CYAN
+GRAY = Fore.RESET
+
+banner = pyfiglet.figlet_format('Port Scanner V 1.1')
+print(banner)
+
+if len(sys.argv) == 2:
+    target = socket.gethostbyname(sys.argv[1])
+else:
+    print("Hostname not valid !")
+    sys.exit()
+
+print('# '*50)
+print("Scanning Target: " + target)
+start_time = datetime.now()
+print('Scanning Started at: ', start_time)
+print('# '*50)
+
+def port_scan(port):
+
+    s = socket.socket(socket.AF_INET,  socket.SOCK_STREAM)
+    s.settimeout(1)
+
+    result = s.connect_ex((target, port))
+
+    s.close()
+
+    return port, result
+
+
+with ThreadPoolExecutor(max_workers= 20) as executor:
+    #Create a dictionary for mapping the tickets to the ports
+    futures = {}
+
+    #Assign a worker to each port and get a ticket
+    for port in COMMON_PORTS:
+        ticket = executor.submit(port_scan, port)
+
+        futures[ticket] = port
+
+    #Get the results from the workers who completed their jobs:
+    for future in as_completed(futures):
+
+        port = futures[future]
+
+        result = future.result()
+
+        if result[1] == 0:
+            print(f'Port {GREEN} {result[0]} {GRAY}is open!')
+
+end_time = datetime.now()
+scan_time = end_time - start_time
+print(f'\nSCAN TIME: {scan_time.total_seconds():.2f} seconds')
